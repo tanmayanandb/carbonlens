@@ -12,10 +12,15 @@ export default function OCR() {
     const [extractedText, setExtractedText] = useState("");
 
     const [form, setForm] = useState({
-        selMonth: 'Jan', selYear: '2024',
-        naturalGas: '', electricity: '', monthlySpend: '',
-        fleetFuel: '', refrigerants: '', purchasedSteam: '',
-        businessTravel: '', waste: '', supplyChain: ''
+        selMonth: 'Jan',
+        selYear: '2026',
+        electricity: '',
+        naturalGas: '',
+        fleetFuel: '',
+        businessTravel: '',
+        waste: '',
+        refrigerants: '',
+        monthlySpend: ''
     });
 
     const fileInputRef = useRef(null);
@@ -63,73 +68,57 @@ export default function OCR() {
         return isNaN(n) ? '' : n;
     };
 
-    const extractData = (rawText) => {
-        const text = normalize(rawText);
-        // Log for debugging — check browser console if OCR misses a field
-        console.group('OCR Extract');
-        console.log('Raw:', rawText);
-        console.log('Normalized:', text);
+    const extractData = (text) => {
+        const normalized = normalize(text);
 
-        // ── ELECTRICITY (kWh) ──────────────────────────────────────────────
-        const kwhMatch =
-            text.match(/([0-9,]+(?:\.[0-9]+)?)\s*(?:kWh|KWH|kwh|kilowatt.?hours?)/i) ||
-            text.match(/(?:electricity|electric|energy)\s*[:\-]?\s*([0-9,]+(?:\.[0-9]+)?)/i) ||
-            text.match(/(?:usage|consumption)\s*[:\-]?\s*([0-9,]+(?:\.[0-9]+)?)\s*(?:kWh)?/i);
+        console.log("Raw OCR:", text);
+        console.log("Normalized OCR:", normalized);
 
-        // ── NATURAL GAS (Therms / MCF / CCF) ─────────────────────────────
-        const gasMatch =
-            text.match(/([0-9,]+(?:\.[0-9]+)?)\s*(?:Therms?|thm|CCF|MCF)/i) ||
-            text.match(/(?:natural gas|gas usage)\s*[:\-]?\s*([0-9,]+(?:\.[0-9]+)?)/i);
+        // Grid Power (kWh)
+        const kwhMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:kwh|kilowatt|units|consumption)/i);
 
-        // ── FLEET FUEL (Gallons) ─────────────────────────────────────────
-        const fuelMatch =
-            text.match(/([0-9,]+(?:\.[0-9]+)?)\s*(?:gallons?|gal|liters?|litres?)/i) ||
-            text.match(/(?:fuel|diesel|petrol)\s*[:\-]?\s*([0-9,]+(?:\.[0-9]+)?)/i);
+        // Natural Gas (Therms)
+        const gasMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:therms?|therm|natural gas|hcf)/i);
 
-        // ── TOTAL AMOUNT ─────────────────────────────────────────────────
-        // Try specific label matches first, then fallback to largest dollar amount
-        // ── TOTAL AMOUNT (₹ / Rs. / INR / plain number) ──────────────────
-        // Indian bills use ₹, Rs., Rs , INR, and Indian comma format (1,23,456.00)
-        const currencyPrefix = /(?:₹|Rs\.?|INR)\s*/i;
-        const amountPattern = /[0-9,]+(?:\.[0-9]{1,2})?/;
+        // Fleet Fuel (Gallons)
+        const fuelMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:gallons?|gal|liters?|ltr|fuel|petrol|diesel|gasoline)/i);
 
-        const costPrimary =
-            // labelled total with currency prefix
-            text.match(new RegExp(`(?:total amount due|amount due|total due|please pay|pay this amount|net payable|bill amount)\\s*[:\\-]?\\s*(?:₹|Rs\\.?|INR)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)`, 'i')) ||
-            // generic "total" / "grand total" label
-            text.match(new RegExp(`(?:total|grand total|balance due|amount payable)\\s*[:\\-]?\\s*(?:₹|Rs\\.?|INR)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)`, 'i')) ||
-            // currency symbol immediately followed by number
-            text.match(/(?:₹|Rs\.?|\$)\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)/);
+        // Business Travel (Miles)
+        const travelMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:miles?|mi|km|kilometers?|distance)/i);
 
-        // If multiple dollar amounts exist, pick the largest (most likely the total)
-        let parsedSpend = '';
-        if (costPrimary) {
-            parsedSpend = String(parseNum(costPrimary[1]));
-        } else {
-            // Fallback: collect ALL numbers that look like amounts (>= 2 digits, with optional decimal)
-            // and pick the largest — on a bill, the largest figure is almost always the total.
-            const allAmounts = [...text.matchAll(/(?:₹|Rs\.?|INR)?\s*([0-9][0-9,]*\.[0-9]{1,2})/gi)]
-                .map(m => parseNum(m[1]))
-                .filter(n => n > 10); // ignore tiny numbers (taxes < ₹10 noise)
-            if (allAmounts.length) parsedSpend = String(Math.max(...allAmounts));
+        // Waste (Tons)
+        const wasteMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:tons?|kg|kilograms?|waste|garbage|trash|refuse)/i);
+
+        // Refrigerants (Kg)
+        const refrigMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:r-?\d+|refrigerants?|kg|recharge)/i);
+
+
+        // Financial Cost (₹)
+        // Multi-pass regex for Indian currency formats
+        const costPatterns = [
+            /(?:total|due|amount|payable|net|final|balance)\s*(?:amount|due)?\s*(?:₹|rs\.?|inr)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d+)?)/i,
+            /(?:₹|rs\.?|inr)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d+)?)\s*(?:total|due|payable|amount)/i,
+            /(?:total|due|payable)\s*(?:amount|due)?\s*[:\-\s]*(\d{1,3}(?:,\d{2,3})*(?:\.\d+)?)/i
+        ];
+
+        let extractedCost = null;
+        for (const pattern of costPatterns) {
+            const match = normalized.match(pattern);
+            if (match && match[1]) {
+                extractedCost = match[1].replace(/,/g, '');
+                break;
+            }
         }
-
-        const parsed = {
-            electricity: kwhMatch ? String(parseNum(kwhMatch[1])) : '',
-            naturalGas: gasMatch ? String(parseNum(gasMatch[1])) : '',
-            fleetFuel: fuelMatch ? String(parseNum(fuelMatch[1])) : '',
-            monthlySpend: parsedSpend
-        };
-        console.log('Parsed results:', parsed);
-        console.log('costPrimary match:', costPrimary);
-        console.groupEnd();
 
         setForm(prev => ({
             ...prev,
-            electricity: parsed.electricity || prev.electricity,
-            naturalGas: parsed.naturalGas || prev.naturalGas,
-            fleetFuel: parsed.fleetFuel || prev.fleetFuel,
-            monthlySpend: parsed.monthlySpend || prev.monthlySpend
+            electricity: kwhMatch ? kwhMatch[1] : prev.electricity,
+            naturalGas: gasMatch ? gasMatch[1] : prev.naturalGas,
+            fleetFuel: fuelMatch ? fuelMatch[1] : prev.fleetFuel,
+            businessTravel: travelMatch ? travelMatch[1] : prev.businessTravel,
+            waste: wasteMatch ? wasteMatch[1] : prev.waste,
+            refrigerants: refrigMatch ? refrigMatch[1] : prev.refrigerants,
+            monthlySpend: extractedCost || prev.monthlySpend
         }));
     };
 
@@ -140,7 +129,7 @@ export default function OCR() {
         e.preventDefault();
         addRecord({ ...form, month: `${form.selYear} ${form.selMonth}` });
         alert("Bill Data Committed to Ledger!");
-        setForm(prev => ({ ...prev, naturalGas: '', electricity: '', monthlySpend: '' }));
+        setForm(prev => ({ ...prev, naturalGas: '', electricity: '', monthlySpend: '', fleetFuel: '', businessTravel: '', waste: '', refrigerants: '' }));
         setFileSrc(null);
         setExtractedText("");
     };
@@ -218,22 +207,41 @@ export default function OCR() {
                         </div>
                     </div>
 
-                    <div style={{ borderLeft: '2px solid #E6E9E7', paddingLeft: '12px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Grid Power (kWh)</label>
-                        <input type="number" name="electricity" value={form.electricity} onChange={handleInput} placeholder="Auto-fills from bill" style={inputStyle} />
-                    </div>
-
-                    <div style={{ borderLeft: '2px solid #A0AEC0', paddingLeft: '12px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Natural Gas (Therms)</label>
-                        <input type="number" name="naturalGas" value={form.naturalGas} onChange={handleInput} placeholder="Auto-fills from bill" style={inputStyle} />
-                    </div>
-
-                    <div style={{ borderLeft: '2px solid #A0AEC0', paddingLeft: '12px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Total Amount Due (₹)</label>
-                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#111211', border: '1px solid #222524', borderRadius: '6px', overflow: 'hidden' }}>
-                            <span style={{ padding: '10px', backgroundColor: '#171817', color: '#8D9390', fontSize: '13px', borderRight: '1px solid #222524' }}>₹</span>
-                            <input type="number" name="monthlySpend" value={form.monthlySpend} onChange={handleInput} placeholder="0.00" style={{ ...inputStyle, border: 'none', borderRadius: 0 }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{ borderLeft: '2px solid #E6E9E7', paddingLeft: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Grid Power (kWh)</label>
+                            <input type="number" name="electricity" value={form.electricity} onChange={handleInput} placeholder="Auto-fills from bill" style={inputStyle} />
                         </div>
+
+                        <div style={{ borderLeft: '4px solid #A0AEC0', paddingLeft: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Natural Gas (Therms)</label>
+                            <input type="number" name="naturalGas" value={form.naturalGas} onChange={handleInput} placeholder="Auto-fills from bill" style={inputStyle} />
+                        </div>
+
+                        <div style={{ borderLeft: '2px solid #3CA677', paddingLeft: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Fleet Fuel (Gal)</label>
+                            <input type="number" name="fleetFuel" value={form.fleetFuel} onChange={handleInput} placeholder="..." style={inputStyle} />
+                        </div>
+
+                        <div style={{ borderLeft: '2px solid #4A90E2', paddingLeft: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Business Travel (Miles)</label>
+                            <input type="number" name="businessTravel" value={form.businessTravel} onChange={handleInput} placeholder="..." style={inputStyle} />
+                        </div>
+
+                        <div style={{ borderLeft: '2px solid #F5A623', paddingLeft: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Waste (Tons)</label>
+                            <input type="number" name="waste" value={form.waste} onChange={handleInput} placeholder="..." style={inputStyle} />
+                        </div>
+
+                        <div style={{ borderLeft: '2px solid #D0021B', paddingLeft: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Refrigerants (Kg)</label>
+                            <input type="number" name="refrigerants" value={form.refrigerants} onChange={handleInput} placeholder="..." style={inputStyle} />
+                        </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #222524', paddingTop: '20px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: '#8D9390', marginBottom: '6px' }}>Consolidated Bill Amount (₹)</label>
+                        <input type="number" name="monthlySpend" value={form.monthlySpend} onChange={handleInput} placeholder="Auto-fills total amount" style={{ ...inputStyle, fontWeight: 700, fontSize: '18px', color: '#E6E9E7' }} />
                     </div>
 
                     <button type="submit" disabled={!form.electricity && !form.naturalGas && !form.monthlySpend} style={{ padding: '12px', backgroundColor: form.electricity || form.naturalGas || form.monthlySpend ? '#E6E9E7' : '#222524', color: form.electricity || form.naturalGas || form.monthlySpend ? '#111211' : '#8D9390', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
