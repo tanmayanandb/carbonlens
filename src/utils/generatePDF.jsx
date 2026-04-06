@@ -23,7 +23,7 @@ export const generateComplianceReport = (records = [], totals = {}, monteCarlo =
         doc.setFontSize(8); doc.setTextColor(100);
         if (companyMeta) doc.text(companyMeta, 14, 35);
         doc.text(`Reporting Year: ${company.reportingYear || new Date().getFullYear()}   |   Audit Date: ${new Date().toLocaleDateString('en-IN')}`, 14, 40);
-        doc.text(`FRAMEWORK ALIGNMENT: ISO 14064-1:2018 | EU CSRD (ESRS) | CALIFORNIA SB 253 | UK SECR`, 14, 45);
+        doc.text(`FRAMEWORK ALIGNMENT: SEBI BRSR Core | ISO 14064-1:2018 | EU CBAM | EU CSRD | CALIFORNIA SB 253 | INDIA CCTS`, 14, 45);
         doc.setLineWidth(0.2); doc.line(14, 50, 196, 50);
 
         doc.setFontSize(12); doc.setTextColor(0); doc.text('Executive Summary', 14, 62);
@@ -51,7 +51,7 @@ export const generateComplianceReport = (records = [], totals = {}, monteCarlo =
         autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
-            startY: 86,
+            startY: 105,
             theme: 'striped',
             headStyles: { fillColor: [34, 37, 36], textColor: [230, 233, 231] },
             styles: { fontSize: 8, font: 'courier' }
@@ -61,7 +61,7 @@ export const generateComplianceReport = (records = [], totals = {}, monteCarlo =
 
         doc.setFontSize(11); doc.setTextColor(0); doc.text('Strategic Compliance & Standard Alignment Note', 14, finalY + 15);
         doc.setFontSize(8); doc.setTextColor(100);
-        const disclaimer = "This report is generated for audit-readiness according to ISO 14064-1:2018 standards and fulfills disclosure requirements under EU CSRD and California SB 253. Data reflects real-time operational telemetry and Monte Carlo variance distributions. This document constitutes a preliminary capital allocation strategy for ESG optimization.";
+        const disclaimer = "This report is generated for audit-readiness according to SEBI BRSR Core, India CCTS, and ISO 14064-1:2018 standards. It fulfills disclosure requirements under EU CBAM, EU CSRD, and California SB 253. Data reflects real-time operational telemetry and Monte Carlo variance distributions. This document constitutes a preliminary capital allocation strategy for ESG optimization.";
         const splitText = doc.splitTextToSize(disclaimer, 180);
         doc.text(splitText, 14, finalY + 22);
 
