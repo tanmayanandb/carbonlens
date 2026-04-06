@@ -20,7 +20,7 @@ export default function Login() {
             if (isSignUp) {
                 const { data, error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
-                if (data.session) navigate('/app/dashboard');
+                if (data.session) navigate('/onboarding');
                 else alert('Account registered. Please login (verification may be required unless disabled in Supabase Dashboard).');
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -68,7 +68,7 @@ export default function Login() {
                         arbon Lens
                     </div>
                     <p style={{ color: '#8D9390', margin: 0, fontSize: '14px' }}>
-                        {isSignUp ? 'Create enterprise-grade audit account' : 'Enterprise Emissions Security Portal'}
+                        {isSignUp ? 'Create an account to get started' : 'Sign in to your organisation'}
                     </p>
                 </header>
 
@@ -117,7 +117,7 @@ export default function Login() {
                             transition: 'all 0.2s'
                         }}
                     >
-                        {loading ? 'Processing Protocol...' : isSignUp ? 'Initialize Account' : 'Authenticate Credentials'}
+                        {loading ? 'Signing in...' : isSignUp ? 'Create Account' : 'Sign in'}
                     </button>
                 </form>
 
@@ -134,7 +134,7 @@ export default function Login() {
                         textDecoration: 'underline'
                     }}
                 >
-                    {isSignUp ? 'Already registered? Login here' : 'No account? Register corporate portal'}
+                    {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                 </button>
             </div>
         </div>

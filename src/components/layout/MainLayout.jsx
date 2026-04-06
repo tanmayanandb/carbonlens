@@ -46,6 +46,7 @@ export default function MainLayout() {
                             { to: '/app/ocr', symbol: 'Sc', atomic: '21', label: 'Scan Invoices' },
                             { to: '/app/insights', symbol: 'Re', atomic: '75', label: 'Recommendations' },
                             { to: '/app/compliance', symbol: 'Cp', atomic: '112', label: 'Compliance' },
+                            { to: '/app/profile', symbol: 'Pr', atomic: '59', label: 'Company Profile' },
                         ].map(({ to, symbol, atomic, label }) => (
                             <li key={to}>
                                 <NavLink to={to} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>

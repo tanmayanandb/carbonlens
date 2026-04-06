@@ -1,12 +1,39 @@
 export default function Compliance() {
     const regulations = [
         {
+            id: 'BRSR',
+            name: 'SEBI BRSR (Core)',
+            jurisdiction: 'India',
+            status: 'Active (Mandatory)',
+            deadline: 'FY 2024-25 onwards',
+            summary: 'Business Responsibility and Sustainability Reporting. Mandatory for top 1000 listed entities. BRSR Core introduces 9 key ESG attributes for reasonable assurance.',
+            impact: 'Critical'
+        },
+        {
+            id: 'CBAM',
+            name: 'EU CBAM',
+            jurisdiction: 'European Union / Global',
+            status: 'Active (Transitional)',
+            deadline: 'January 1, 2026 (Definitive)',
+            summary: 'Carbon Border Adjustment Mechanism. Affects exporters of steel, cement, and electricity to the EU. Requires precise embedded emission quantification.',
+            impact: 'Critical'
+        },
+        {
+            id: 'CCTS',
+            name: 'India CCTS',
+            jurisdiction: 'India',
+            status: 'Notification Phase',
+            deadline: 'FY 2025 (Expected)',
+            summary: 'Carbon Credit Trading Scheme. Establishes a domestic compliance market for India. Large emitters will be assigned targets and trade credits.',
+            impact: 'High'
+        },
+        {
             id: 'SB253',
             name: 'California SB 253',
             jurisdiction: 'United States (California)',
             status: 'Active / Enforceable',
             deadline: 'August 10, 2026',
-            summary: 'Mandates disclosure of Scope 1 and 2 emissions for companies >$1B revenue doing business in California. Scope 3 reporting follows in 2027.',
+            summary: 'Mandates disclosure of Scope 1 and 2 emissions for companies >$1B revenue doing business in California. Scope 3 follows in 2027.',
             impact: 'High'
         },
         {
@@ -15,26 +42,8 @@ export default function Compliance() {
             jurisdiction: 'European Union',
             status: 'Active (Phased)',
             deadline: 'FY 2027 (Reporting 2028)',
-            summary: 'Corporate Sustainability Reporting Directive. Requires comprehensive ESG disclosure under ESRS standards. Recent "Omnibus" measures delayed Wave 2 reporting to 2028.',
+            summary: 'Corporate Sustainability Reporting Directive. Requires comprehensive ESG disclosure under ESRS standards.',
             impact: 'Critical'
-        },
-        {
-            id: 'SECR',
-            name: 'UK SECR',
-            jurisdiction: 'United Kingdom',
-            status: 'Active',
-            deadline: 'Annual Directors Report',
-            summary: 'Streamlined Energy and Carbon Reporting. Mandatory for large UK companies to disclose energy use and GHG emissions.',
-            impact: 'High'
-        },
-        {
-            id: 'SEC',
-            name: 'SEC Climate Rule',
-            jurisdiction: 'United States (Federal)',
-            status: 'Stalled / Inactive',
-            deadline: 'N/A',
-            summary: 'Currently subject to a voluntary stay. The SEC ended its legal defense of the 2024 rule in March 2025. Implementation is paused indefinitely.',
-            impact: 'Low (Current)'
         }
     ];
 
@@ -44,8 +53,8 @@ export default function Compliance() {
         fontWeight: 700,
         padding: '2px 8px',
         borderRadius: '12px',
-        backgroundColor: impact === 'Critical' ? '#E6E9E7' : impact === 'High' ? '#A0AEC0' : '#222524',
-        color: '#111211',
+        backgroundColor: impact === 'Critical' ? 'var(--text-primary)' : impact === 'High' ? 'var(--text-muted)' : 'var(--border)',
+        color: 'var(--bg-base)',
         marginLeft: '12px'
     });
 

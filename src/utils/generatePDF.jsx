@@ -5,21 +5,34 @@ export const generateComplianceReport = (records = [], totals = {}, monteCarlo =
     try {
         const doc = new jsPDF();
 
+        // Load company profile from onboarding
+        const company = JSON.parse(localStorage.getItem('company_profile') || '{}');
+        const companyName = company.name || 'Organisation';
+        const companyMeta = [
+            company.industry, company.size ? `${company.size} employees` : null,
+            company.gstin ? `GSTIN: ${company.gstin}` : null,
+            company.address
+        ].filter(Boolean).join('  |  ');
+
         doc.setFontSize(20); doc.setTextColor(34, 37, 36);
-        doc.text('ESG / GHG Compliance & Capital Allocation Audit', 14, 20);
+        doc.text('ESG / GHG Compliance Audit', 14, 20);
+
+        doc.setFontSize(11); doc.setTextColor(0);
+        doc.text(companyName, 14, 29);
 
         doc.setFontSize(8); doc.setTextColor(100);
-        doc.text(`AUDIT DATE: ${new Date().toLocaleDateString()}`, 14, 28);
-        doc.text(`FRAMEWORK ALIGNMENT: ISO 14064-1:2018 | EU CSRD (ESRS) | CALIFORNIA SB 253 | UK SECR`, 14, 33);
-        doc.setLineWidth(0.2); doc.line(14, 38, 196, 38);
+        if (companyMeta) doc.text(companyMeta, 14, 35);
+        doc.text(`Reporting Year: ${company.reportingYear || new Date().getFullYear()}   |   Audit Date: ${new Date().toLocaleDateString('en-IN')}`, 14, 40);
+        doc.text(`FRAMEWORK ALIGNMENT: ISO 14064-1:2018 | EU CSRD (ESRS) | CALIFORNIA SB 253 | UK SECR`, 14, 45);
+        doc.setLineWidth(0.2); doc.line(14, 50, 196, 50);
 
-        doc.setFontSize(12); doc.setTextColor(0); doc.text('Executive Summary (MtCO2e Totalized)', 14, 48);
+        doc.setFontSize(12); doc.setTextColor(0); doc.text('Executive Summary', 14, 62);
         doc.setFontSize(10); doc.setTextColor(80);
-        doc.text(`Total Audited Emissions:  ${totals.emissions > 0 ? totals.emissions.toFixed(2) : "0.00"} MtCO2e`, 14, 56);
-        doc.text(`Capital Identified:  ₹${totals.cost > 0 ? totals.cost.toLocaleString('en-IN') : "0.00"} INR`, 14, 62);
-        doc.text(`P90 Regulatory Risk Threshold:  ${monteCarlo.p90 || "N/A"} MtCO2e`, 14, 68);
+        doc.text(`Total Audited Emissions:  ${totals.emissions > 0 ? totals.emissions.toFixed(2) : "0.00"} MtCO2e`, 14, 70);
+        doc.text(`Capital Identified:  ₹${totals.cost > 0 ? totals.cost.toLocaleString('en-IN') : "0.00"} INR`, 14, 76);
+        doc.text(`P90 Regulatory Risk Threshold:  ${monteCarlo.p90 || "N/A"} MtCO2e`, 14, 82);
 
-        doc.setFontSize(12); doc.setTextColor(0); doc.text('GHG Ledger Matrix (Local Telemetry)', 14, 82);
+        doc.setFontSize(12); doc.setTextColor(0); doc.text('GHG Ledger Matrix', 14, 96);
 
         const tableColumn = ["Period", "Scope 1", "Scope 2", "Scope 3", "Total", "Capital"];
         const tableRows = [];

@@ -57,6 +57,7 @@ function App() {
             <Route path="ocr" element={<OCR />} />
             <Route path="insights" element={<Insights />} />
             <Route path="compliance" element={<Compliance />} />
+            <Route path="profile" element={<Company />} />
           </Route>
 
           <Route path="*" element={<Navigate to={session ? "/app/dashboard" : "/login"} replace />} />
